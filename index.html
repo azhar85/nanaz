@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Klasifikasi Kematangan Nanas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    :root {
+      --primary: #00c853;
+      --primary-dark: #009624;
+      --bg: #0f172a;
+      --card-bg: #0b1120;
+      --accent: #fbbf24;
+      --text-light: #e5e7eb;
+      --text-muted: #9ca3af;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 60%);
+      color: var(--text-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 960px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 800px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: rgba(15,23,42,0.96);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+      padding: 20px 22px;
+      border: 1px solid rgba(148,163,184,0.15);
+      backdrop-filter: blur(10px);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .logo-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: conic-gradient(from 220deg, #facc15, #22c55e, #16a34a, #f97316, #facc15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #111827;
+      font-weight: 800;
+      font-size: 20px;
+    }
+
+    .title {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .pill {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.4);
+      color: var(--text-muted);
+    }
+
+    /* Upload area */
+    .upload-zone {
+      margin-top: 14px;
+      padding: 18px;
+      border-radius: 14px;
+      border: 1.5px dashed rgba(148,163,184,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: radial-gradient(circle at top left, rgba(34,197,94,0.12), rgba(15,23,42,0.95));
+    }
+
+    .upload-zone.dragover {
+      border-color: var(--primary);
+      background: radial-gradient(circle at top, rgba(74,222,128,0.24), rgba(15,23,42,1));
+      transform: translateY(-1px);
+    }
+
+    .upload-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+      font-size: 24px;
+    }
+
+    .upload-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .upload-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .upload-btn-row {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #f9fafb;
+      box-shadow: 0 10px 25px rgba(16,185,129,0.35);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-light);
+      border: 1px solid rgba(148,163,184,0.7);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+      box-shadow: none;
+    }
+
+    .file-info {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .preview-wrapper {
+      margin-top: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .preview-box {
+      flex: 0 0 160px;
+      max-width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(148,163,184,0.4);
+      background: #020617;
+    }
+
+    .preview-box img {
+      width: 100%;
+      display: block;
+      max-height: 180px;
+      object-fit: cover;
+    }
+
+    .preview-caption {
+      padding: 6px 8px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .tips {
+      flex: 1;
+      min-width: 180px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .tips ul {
+      padding-left: 18px;
+      margin: 6px 0 0;
+    }
+
+    .tips li {
+      margin-bottom: 4px;
+    }
+
+    /* Right panel - results */
+    .result-header {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .main-result {
+      border-radius: 14px;
+      padding: 14px 14px 12px;
+      background: radial-gradient(circle at top left, rgba(250,204,21,0.28), rgba(15,23,42,1));
+      border: 1px solid rgba(250,204,21,0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .status-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #fef9c3;
+    }
+
+    .status-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .status-conf {
+      font-size: 0.9rem;
+      color: #fef9c3;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.7);
+      border: 1px solid rgba(248,250,252,0.2);
+      margin-top: 4px;
+      font-size: 0.72rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .placeholder-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+
+    /* Probabilities */
+    .probs-section {
+      margin-top: 16px;
+    }
+
+    .prob-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      margin-bottom: 4px;
+    }
+
+    .prob-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .prob-bar-track {
+      position: relative;
+      height: 8px;
+      border-radius: 999px;
+      background: #020617;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .prob-bar-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #22c55e, #facc15);
+      transition: width 0.4s ease-out;
+    }
+
+    .prob-percent {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+      margin-bottom: 4px;
+    }
+
+    .prob-label-pill {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+    }
+
+    /* History */
+    .history {
+      margin-top: 18px;
+      border-top: 1px solid rgba(148,163,184,0.3);
+      padding-top: 10px;
+    }
+
+    .history-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .history-item {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .history-item span:first-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
+
+    .badge-small {
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      border: 1px solid rgba(148,163,184,0.6);
+    }
+
+    .loading-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      animation: bounce 0.6s infinite alternate;
+    }
+
+    .dots {
+      display: inline-flex;
+      gap: 3px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    .dots div:nth-child(2) { animation-delay: 0.1s; }
+    .dots div:nth-child(3) { animation-delay: 0.2s; }
+
+    @keyframes bounce {
+      from { transform: translateY(0); opacity: 0.6; }
+      to { transform: translateY(-3px); opacity: 1; }
+    }
+
+    .error-text {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 6px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+
+    <!-- LEFT: Upload & preview -->
+    <div class="card">
+      <div class="header">
+        <div class="logo-circle">🍍</div>
+        <div>
+          <div class="title">PineCheck</div>
+          <div class="subtitle">Klasifikasi tingkat kematangan nanas berbasis CNN</div>
+          <div class="pill-row">
+            <div class="pill">Mentah</div>
+            <div class="pill">Mengkal</div>
+            <div class="pill">Matang</div>
+            <div class="pill">Lewat matang</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="uploadZone" class="upload-zone">
+        <div class="upload-icon">⬆️</div>
+        <div class="upload-title">Tarik & letakkan foto nanas di sini</div>
+        <div class="upload-hint">atau klik tombol di bawah untuk memilih file dari perangkat Anda</div>
+
+        <div class="upload-btn-row">
+          <button id="chooseBtn" class="btn btn-outline" type="button">Pilih File</button>
+          <button id="predictBtn" class="btn btn-primary" type="button">
+            Prediksi Sekarang
+          </button>
+        </div>
+
+        <div id="fileInfo" class="file-info"></div>
+        <div id="errorBox" class="error-text" style="display:none;"></div>
+      </div>
+
+      <input type="file" id="imageInput" accept="image/*" style="display:none">
+
+      <div class="preview-wrapper">
+        <div class="preview-box">
+          <img id="previewImg" alt="">
+          <div class="preview-caption">
+            Preview foto terakhir yang akan diprediksi.
+          </div>
+        </div>
+
+        <div class="tips">
+          <strong>Tips pengambilan gambar:</strong>
+          <ul>
+            <li>Pastikan nanas terlihat utuh dan jelas.</li>
+            <li>Usahakan pencahayaan cukup dan tidak terlalu gelap.</li>
+            <li>Hindari blur, tangan bergerak, atau objek lain yang menutupi nanas.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Result & info -->
+    <div class="card">
+      <div class="result-header">Hasil analisis</div>
+
+      <div class="main-result" id="mainResultBox">
+        <div class="status-label">Status kematangan</div>
+        <div class="status-value" id="statusValue">
+          Belum ada prediksi
+        </div>
+        <div class="status-conf" id="statusConf">
+          Upload foto nanas untuk melihat hasil.
+        </div>
+        <div class="status-badge" id="statusBadge" style="display:none;">
+          <span class="status-dot"></span>
+          <span id="statusBadgeText"></span>
+        </div>
+      </div>
+
+      <div class="placeholder-text" id="placeHolderText">
+        Sistem ini menggunakan model Convolutional Neural Network (CNN)
+        untuk mengklasifikasikan tingkat kematangan nanas ke dalam 4 kelas utama.
+      </div>
+
+      <div class="probs-section">
+        <div class="result-header">Probabilitas per kelas</div>
+
+        <div class="prob-row">
+          <div class="prob-label">
+            <span class="prob-label-pill" style="background:#38bdf8;"></span>
+            <span>Mentah</span>
+          </div>
+          <div id="probMentahVal" class="prob-percent">0%</div>
+        </div>
+        <div class="prob-bar-track">
+          <div id="probMentahBar" class="prob-bar-fill"></div>
+        </div>
+
+        <div class="prob-row">
+          <div class="prob-label">
+            <span class="prob-label-pill" style="background:#22c55e;"></span>
+            <span>Mengkal</span>
+          </div>
+          <div id="probMengkalVal" class="prob-percent">0%</div>
+        </div>
+        <div class="prob-bar-track">
+          <div id="probMengkalBar" class="prob-bar-fill"></div>
+        </div>
+
+        <div class="prob-row">
+          <div class="prob-label">
+            <span class="prob-label-pill" style="background:#eab308;"></span>
+            <span>Matang</span>
+          </div>
+          <div id="probMatangVal" class="prob-percent">0%</div>
+        </div>
+        <div class="prob-bar-track">
+          <div id="probMatangBar" class="prob-bar-fill"></div>
+        </div>
+
+        <div class="prob-row">
+          <div class="prob-label">
+            <span class="prob-label-pill" style="background:#f97316;"></span>
+            <span>Lewat matang</span>
+          </div>
+          <div id="probLewatVal" class="prob-percent">0%</div>
+        </div>
+        <div class="prob-bar-track">
+          <div id="probLewatBar" class="prob-bar-fill"></div>
+        </div>
+      </div>
+
+      <div class="history" id="historyBox">
+        <div class="history-title">Riwayat singkat</div>
+        <div id="historyList" class="history-list">
+          <div class="history-item">
+            <span>Belum ada riwayat.</span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:8000/predict";
+
+    const uploadZone   = document.getElementById("uploadZone");
+    const imageInput   = document.getElementById("imageInput");
+    const chooseBtn    = document.getElementById("chooseBtn");
+    const predictBtn   = document.getElementById("predictBtn");
+    const previewImg   = document.getElementById("previewImg");
+    const fileInfo     = document.getElementById("fileInfo");
+    const errorBox     = document.getElementById("errorBox");
+
+    const statusValue  = document.getElementById("statusValue");
+    const statusConf   = document.getElementById("statusConf");
+    const statusBadge  = document.getElementById("statusBadge");
+    const statusBadgeText = document.getElementById("statusBadgeText");
+    const placeHolderText = document.getElementById("placeHolderText");
+
+    const probMentahBar  = document.getElementById("probMentahBar");
+    const probMengkalBar = document.getElementById("probMengkalBar");
+    const probMatangBar  = document.getElementById("probMatangBar");
+    const probLewatBar   = document.getElementById("probLewatBar");
+
+    const probMentahVal  = document.getElementById("probMentahVal");
+    const probMengkalVal = document.getElementById("probMengkalVal");
+    const probMatangVal  = document.getElementById("probMatangVal");
+    const probLewatVal   = document.getElementById("probLewatVal");
+
+    const historyList = document.getElementById("historyList");
+
+    let selectedFile = null;
+    let isLoading = false;
+
+    function setLoading(state) {
+      isLoading = state;
+      predictBtn.disabled = state;
+      if (state) {
+        predictBtn.innerHTML = `
+          Memproses
+          <span class="dots">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+          </span>
+        `;
+      } else {
+        predictBtn.textContent = "Prediksi Sekarang";
+      }
+    }
+
+    function resetBars() {
+      const bars = [probMentahBar, probMengkalBar, probMatangBar, probLewatBar];
+      const vals = [probMentahVal, probMengkalVal, probMatangVal, probLewatVal];
+      bars.forEach(b => b.style.width = "0%");
+      vals.forEach(v => v.textContent = "0%");
+    }
+
+    function updateBars(allProb) {
+      const toPercent = v => (v * 100).toFixed(1) + "%";
+
+      probMentahBar.style.width  = toPercent(allProb["mentah"] || 0);
+      probMengkalBar.style.width = toPercent(allProb["mengkal"] || 0);
+      probMatangBar.style.width  = toPercent(allProb["matang"] || 0);
+      probLewatBar.style.width   = toPercent(allProb["lewat_matang"] || 0);
+
+      probMentahVal.textContent  = toPercent(allProb["mentah"] || 0);
+      probMengkalVal.textContent = toPercent(allProb["mengkal"] || 0);
+      probMatangVal.textContent  = toPercent(allProb["matang"] || 0);
+      probLewatVal.textContent   = toPercent(allProb["lewat_matang"] || 0);
+    }
+
+    function addHistory(filename, label, conf) {
+      const percent = (conf * 100).toFixed(1) + "%";
+      const item = document.createElement("div");
+      item.className = "history-item";
+      item.innerHTML = `
+        <span title="${filename}">${filename}</span>
+        <span>
+          <span class="badge-small">${label}</span>
+          <span style="margin-left:6px;">${percent}</span>
+        </span>
+      `;
+      if (historyList.firstChild &&
+          historyList.firstChild.textContent.includes("Belum ada riwayat")) {
+        historyList.innerHTML = "";
+      }
+      historyList.prepend(item);
+      // batasi 5 riwayat
+      while (historyList.childElementCount > 5) {
+        historyList.lastChild.remove();
+      }
+    }
+
+    function showError(msg) {
+      errorBox.style.display = "block";
+      errorBox.textContent = msg;
+    }
+
+    function clearError() {
+      errorBox.style.display = "none";
+      errorBox.textContent = "";
+    }
+
+    function handleFile(file) {
+      if (!file) return;
+      selectedFile = file;
+      clearError();
+      fileInfo.textContent = `File terpilih: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        previewImg.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // --- event: pilih file
+    chooseBtn.addEventListener("click", () => {
+      imageInput.click();
+    });
+
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      handleFile(file);
+    });
+
+    // --- drag & drop
+    ["dragenter", "dragover"].forEach(evt => {
+      uploadZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadZone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(evt => {
+      uploadZone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadZone.classList.remove("dragover");
+      });
+    });
+
+    uploadZone.addEventListener("drop", (e) => {
+      const file = e.dataTransfer.files[0];
+      handleFile(file);
+    });
+
+    // --- prediksi
+    predictBtn.addEventListener("click", async () => {
+      if (!selectedFile) {
+        showError("Silakan pilih atau tarik sebuah foto nanas terlebih dahulu.");
+        return;
+      }
+
+      setLoading(true);
+      clearError();
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+
+        const data = await response.json();
+        const label = data.predicted_label || data.predicted_class;
+        const conf = data.confidence || 0;
+
+        statusValue.textContent = label;
+        statusConf.textContent = "Keyakinan model: " + (conf * 100).toFixed(1) + "%";
+        statusBadge.style.display = "inline-flex";
+        statusBadgeText.textContent = "Prediksi berhasil";
+
+        placeHolderText.textContent =
+          "Gunakan hasil ini sebagai informasi awal. Untuk keputusan panen atau penjualan, " +
+          "tetap kombinasikan dengan pengecekan fisik langsung (warna kulit, aroma, dan tekstur).";
+
+        updateBars(data.all_probabilities || {});
+        addHistory(selectedFile.name, label, conf);
+
+      } catch (err) {
+        console.error(err);
+        showError("Terjadi kesalahan saat menghubungi server. Pastikan API FastAPI berjalan di " + API_URL);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // inisialisasi
+    resetBars();
+  </script>
+</body>
+</html>
